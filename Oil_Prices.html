@@ -6,6 +6,7 @@
     <title>Oil Prices</title>
     <link href="/style.css" rel="stylesheet" type="text/css" media="all">
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -28,7 +29,6 @@
         min-height: 100vh;
       }
 
-      /* Subtle grid background */
       body::before {
         content: '';
         position: fixed;
@@ -50,7 +50,6 @@
         padding: 48px 32px 80px;
       }
 
-      /* Header */
       header {
         margin-bottom: 40px;
         animation: fadeUp 0.6s ease both;
@@ -79,7 +78,6 @@
         background: linear-gradient(90deg, var(--accent) 0%, var(--border) 60%, transparent 100%);
       }
 
-      /* Ticker strip */
       .ticker {
         display: flex;
         gap: 32px;
@@ -110,16 +108,12 @@
         color: var(--text);
       }
 
-      .ticker-value.up   { color: var(--green); }
-      .ticker-value.down { color: var(--red); }
-
       .ticker-divider {
         width: 1px;
         background: var(--border);
         align-self: stretch;
       }
 
-      /* Chart card */
       .chart-card {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -129,7 +123,6 @@
         animation: fadeUp 0.6s 0.2s ease both;
       }
 
-      /* Corner accents */
       .chart-card::before,
       .chart-card::after {
         content: '';
@@ -164,25 +157,40 @@
         letter-spacing: 0.05em;
       }
 
-      .chart-meta span {
-        color: var(--accent);
-      }
+      .chart-meta span { color: var(--accent); }
 
-      .chart-wrapper {
+      #chart_div {
         width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        min-height: 400px;
       }
 
-      .chart-wrapper iframe {
-        display: block;
-        border: none;
-        width: 852px;
-        height: 371px;
-        min-width: 600px;
+      /* Style the Google Chart to match our dark theme */
+      #chart_div svg text {
+        fill: var(--muted) !important;
       }
 
-      /* Footer */
+      .chart-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      .chart-loading::after {
+        content: '';
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-left: 10px;
+      }
+
       footer {
         margin-top: 32px;
         display: flex;
@@ -216,6 +224,10 @@
       @keyframes fadeUp {
         from { opacity: 0; transform: translateY(16px); }
         to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
       }
 
       @media (max-width: 600px) {
@@ -263,15 +275,8 @@
           <span class="chart-title">Price History</span>
           <span class="chart-meta">Updated <span>daily</span> · All prices in <span>USD</span></span>
         </div>
-        <div class="chart-wrapper">
-          <iframe
-            width="852"
-            height="371"
-            seamless
-            frameborder="0"
-            scrolling="no"
-            src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6qOoyNHOdzvSqGwCEaf11V_C8ebyntstBN82klMgEuCycOA5ZZKzdqzS50K14mot_ob5lN9gfgC3U/pubchart?oid=260607753&amp;format=interactive">
-          </iframe>
+        <div id="chart_div">
+          <div class="chart-loading">Loading chart</div>
         </div>
       </div>
 
@@ -281,5 +286,108 @@
       </footer>
 
     </div>
+
+    <script>
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(fetchData);
+
+      function fetchData() {
+        var spreadsheetId = '1Ai1jaKGAVQGW-zk3h4YTyh2ECq8nUQL_quP4y5btDu4';
+        var csvUrl = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId + '/gviz/tq?tqx=out:csv&sheet=Sheet1';
+
+        fetch(csvUrl)
+          .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          })
+          .then(function(csv) { drawChart(parseCSV(csv)); })
+          .catch(function(e) {
+            document.getElementById('chart_div').innerHTML =
+              '<div class="chart-loading" style="color:#c0392b">Failed to load data: ' + e.message + '</div>';
+          });
+      }
+
+      function parseCSV(csvText) {
+        var lines = csvText.trim().split('\n');
+        var headers = lines[0].split(',').map(function(h) { return h.replace(/"/g, '').trim(); });
+
+        var data = new google.visualization.DataTable();
+        data.addColumn('datetime', headers[0]);
+        for (var h = 1; h < headers.length; h++) {
+          data.addColumn('number', headers[h]);
+        }
+
+        for (var i = 1; i < lines.length; i++) {
+          var cols = lines[i].match(/(".*?"|[^",\n]+)/g) || [];
+          cols = cols.map(function(c) { return c.replace(/"/g, '').trim(); });
+          if (cols.length < 2) continue;
+          var row = [new Date(cols[0])];
+          for (var j = 1; j < headers.length; j++) {
+            row.push(cols[j] !== undefined && cols[j] !== '' ? parseFloat(cols[j]) : null);
+          }
+          data.addRow(row);
+        }
+        return data;
+      }
+
+      function drawChart(data) {
+        var isDark = true;
+        var bgColor    = '#1c2030';
+        var textColor  = '#a0a8b8';
+        var gridColor  = '#1f2433';
+        var titleColor = '#a0a8b8';
+
+        var options = {
+          backgroundColor: { fill: bgColor },
+          chartArea: {
+            backgroundColor: bgColor,
+            left: 70, top: 20, right: 20, bottom: 80,
+            width: '100%'
+          },
+          colors: ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'],
+          lineWidth: 2,
+          pointSize: 4,
+          pointShape: 'circle',
+          curveType: 'function',
+          legend: {
+            position: 'bottom',
+            textStyle: { color: textColor, fontName: 'DM Mono', fontSize: 11 }
+          },
+          hAxis: {
+            textStyle:      { color: textColor, fontName: 'DM Mono', fontSize: 10 },
+            titleTextStyle: { color: textColor, fontName: 'DM Mono', fontSize: 10 },
+            gridlines:      { color: gridColor },
+            baselineColor:  gridColor,
+            format:         'M/d/yy',
+            slantedText: true,
+            slantedTextAngle: 45
+          },
+          vAxis: {
+            textStyle:      { color: textColor, fontName: 'DM Mono', fontSize: 10 },
+            titleTextStyle: { color: titleColor, fontName: 'DM Mono', fontSize: 10 },
+            title:          'Price (USD)',
+            format:         '$#,##0.00',
+            gridlines:      { color: gridColor, count: 10 },
+            minorGridlines: { color: gridColor, count: 2 },
+            baselineColor:  gridColor,
+            viewWindowMode: 'pretty'
+          },
+          tooltip: {
+            textStyle: { color: '#0d0f14', fontName: 'DM Mono', fontSize: 11 },
+            showColorCode: true
+          },
+          width:  '100%',
+          height: 420
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+        // Redraw on window resize for full responsiveness
+        window.addEventListener('resize', function() {
+          chart.draw(data, options);
+        });
+      }
+    </script>
   </body>
 </html>
