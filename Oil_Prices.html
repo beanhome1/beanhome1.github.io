@@ -491,8 +491,19 @@
             btn.classList.add('active');
 
             currentDays = parseInt(btn.dataset.days);
-            var to   = range.max;
-            var from = currentDays === 0 ? range.min : new Date(to.getTime() - currentDays * 86400000);
+            var to, from;
+            if (currentDays === 0) {
+              from = range.min;
+              to   = range.max;
+            } else if (currentDays === 1) {
+              // Snap to the calendar day of the latest data point
+              var lastDay = new Date(range.max);
+              from = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate(), 0, 0, 0);
+              to   = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1, 0, 0, 0);
+            } else {
+              to   = range.max;
+              from = new Date(to.getTime() - currentDays * 86400000);
+            }
 
             fromInput.value = toDateInputVal(from);
             toInput.value   = toDateInputVal(to);
