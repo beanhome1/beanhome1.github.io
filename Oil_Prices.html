@@ -159,9 +159,94 @@
 
       .chart-meta span { color: var(--accent); }
 
-      #chart_div {
-        width: 100%;
-        min-height: 400px;
+      /* Date picker and zoom controls */
+      .chart-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .zoom-btn {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid var(--border);
+        padding: 4px 10px;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s, background 0.15s;
+      }
+
+      .zoom-btn:hover {
+        color: var(--text);
+        border-color: var(--muted);
+      }
+
+      .zoom-btn.active {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: rgba(200, 169, 110, 0.08);
+      }
+
+      .date-range {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+        flex-wrap: wrap;
+      }
+
+      .date-range label {
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .date-range input[type="date"] {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 4px 8px;
+        outline: none;
+        cursor: pointer;
+        color-scheme: dark;
+      }
+
+      .date-range input[type="date"]:focus {
+        border-color: var(--accent);
+      }
+
+      /* Custom legend */
+      .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+      }
+
+      .legend-swatch {
+        width: 20px;
+        height: 3px;
+        border-radius: 2px;
+        flex-shrink: 0;
       }
 
       /* Style the Google Chart to match our dark theme */
@@ -275,9 +360,26 @@
           <span class="chart-title">Price History</span>
           <span class="chart-meta">Updated <span>daily</span> · All prices in <span>USD</span></span>
         </div>
+        <div class="chart-controls">
+          <button class="zoom-btn" data-days="1">1D</button>
+          <button class="zoom-btn" data-days="5">5D</button>
+          <button class="zoom-btn" data-days="7">1W</button>
+          <button class="zoom-btn" data-days="30">1M</button>
+          <button class="zoom-btn" data-days="90">3M</button>
+          <button class="zoom-btn" data-days="180">6M</button>
+          <button class="zoom-btn" data-days="365">1Y</button>
+          <button class="zoom-btn active" data-days="0">Max</button>
+          <div class="date-range">
+            <label>From</label>
+            <input type="date" id="date-from">
+            <label>To</label>
+            <input type="date" id="date-to">
+          </div>
+        </div>
         <div id="chart_div">
           <div class="chart-loading">Loading chart</div>
         </div>
+        <div class="chart-legend" id="chart-legend"></div>
       </div>
 
       <footer>
@@ -291,6 +393,10 @@
       google.charts.load('current', { packages: ['corechart'] });
       google.charts.setOnLoadCallback(fetchData);
 
+      var allData = null;
+      var chart   = null;
+      var COLORS  = ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'];
+
       function fetchData() {
         var spreadsheetId = '1Ai1jaKGAVQGW-zk3h4YTyh2ECq8nUQL_quP4y5btDu4';
         var csvUrl = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId + '/gviz/tq?tqx=out:csv&sheet=Sheet1';
@@ -300,7 +406,12 @@
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.text();
           })
-          .then(function(csv) { drawChart(parseCSV(csv)); })
+          .then(function(csv) {
+            allData = parseCSV(csv);
+            buildLegend(allData);
+            initControls();
+            drawChart(allData);
+          })
           .catch(function(e) {
             document.getElementById('chart_div').innerHTML =
               '<div class="chart-loading" style="color:#c0392b">Failed to load data: ' + e.message + '</div>';
@@ -330,29 +441,97 @@
         return data;
       }
 
+      function buildLegend(data) {
+        var legend = document.getElementById('chart-legend');
+        legend.innerHTML = '';
+        for (var i = 1; i < data.getNumberOfColumns(); i++) {
+          var item = document.createElement('div');
+          item.className = 'legend-item';
+          item.innerHTML =
+            '<span class="legend-swatch" style="background:' + COLORS[i - 1] + '"></span>' +
+            data.getColumnLabel(i);
+          legend.appendChild(item);
+        }
+      }
+
+      function filterData(data, fromDate, toDate) {
+        if (!fromDate && !toDate) return data;
+        var view = new google.visualization.DataView(data);
+        var rows = [];
+        for (var i = 0; i < data.getNumberOfRows(); i++) {
+          var d = data.getValue(i, 0);
+          if (fromDate && d < fromDate) continue;
+          if (toDate   && d > toDate)   continue;
+          rows.push(i);
+        }
+        view.setRows(rows);
+        return view;
+      }
+
+      function getDateRange(data) {
+        var min = data.getValue(0, 0);
+        var max = data.getValue(data.getNumberOfRows() - 1, 0);
+        return { min: min, max: max };
+      }
+
+      function initControls() {
+        var range = getDateRange(allData);
+
+        // Set date inputs to full range
+        var fromInput = document.getElementById('date-from');
+        var toInput   = document.getElementById('date-to');
+        fromInput.value = toDateInputVal(range.min);
+        toInput.value   = toDateInputVal(range.max);
+
+        // Zoom buttons
+        document.querySelectorAll('.zoom-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.zoom-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+
+            var days = parseInt(btn.dataset.days);
+            var to   = range.max;
+            var from = days === 0 ? range.min : new Date(to.getTime() - days * 86400000);
+
+            fromInput.value = toDateInputVal(from);
+            toInput.value   = toDateInputVal(to);
+            drawChart(filterData(allData, from, to));
+          });
+        });
+
+        // Date inputs
+        function onDateChange() {
+          document.querySelectorAll('.zoom-btn').forEach(function(b) { b.classList.remove('active'); });
+          var from = fromInput.value ? new Date(fromInput.value) : null;
+          var to   = toInput.value   ? new Date(toInput.value + 'T23:59:59') : null;
+          drawChart(filterData(allData, from, to));
+        }
+        fromInput.addEventListener('change', onDateChange);
+        toInput.addEventListener('change', onDateChange);
+      }
+
+      function toDateInputVal(date) {
+        return date.toISOString().slice(0, 10);
+      }
+
       function drawChart(data) {
-        var isDark = true;
-        var bgColor    = '#1c2030';
-        var textColor  = '#a0a8b8';
-        var gridColor  = '#1f2433';
-        var titleColor = '#a0a8b8';
+        var bgColor   = '#1c2030';
+        var textColor = '#a0a8b8';
+        var gridColor = '#1f2433';
 
         var options = {
           backgroundColor: { fill: bgColor },
           chartArea: {
             backgroundColor: bgColor,
-            left: 70, top: 20, right: 20, bottom: 80,
+            left: 70, top: 20, right: 20, bottom: 60,
             width: '100%'
           },
-          colors: ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'],
+          colors: COLORS,
           lineWidth: 2,
           pointSize: 4,
           pointShape: 'circle',
           curveType: 'function',
-          legend: {
-            position: 'bottom',
-            textStyle: { color: textColor, fontName: 'DM Mono', fontSize: 11 }
-          },
+          legend: { position: 'none' },
           hAxis: {
             textStyle:      { color: textColor, fontName: 'DM Mono', fontSize: 10 },
             titleTextStyle: { color: textColor, fontName: 'DM Mono', fontSize: 10 },
@@ -364,7 +543,7 @@
           },
           vAxis: {
             textStyle:      { color: textColor, fontName: 'DM Mono', fontSize: 10 },
-            titleTextStyle: { color: titleColor, fontName: 'DM Mono', fontSize: 10 },
+            titleTextStyle: { color: textColor, fontName: 'DM Mono', fontSize: 10 },
             title:          'Price (USD)',
             format:         '$#,##0.00',
             gridlines:      { color: gridColor, count: 10 },
@@ -380,13 +559,11 @@
           height: 420
         };
 
-        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        if (!chart) {
+          chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+          window.addEventListener('resize', function() { chart.draw(data, options); });
+        }
         chart.draw(data, options);
-
-        // Redraw on window resize for full responsiveness
-        window.addEventListener('resize', function() {
-          chart.draw(data, options);
-        });
       }
     </script>
   </body>
