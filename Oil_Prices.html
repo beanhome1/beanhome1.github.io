@@ -393,9 +393,10 @@
       google.charts.load('current', { packages: ['corechart'] });
       google.charts.setOnLoadCallback(fetchData);
 
-      var allData = null;
-      var chart   = null;
-      var COLORS  = ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'];
+      var allData     = null;
+      var chart       = null;
+      var COLORS      = ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'];
+      var currentDays = 0; // 0 = Max
 
       function fetchData() {
         var spreadsheetId = '1Ai1jaKGAVQGW-zk3h4YTyh2ECq8nUQL_quP4y5btDu4';
@@ -489,9 +490,9 @@
             document.querySelectorAll('.zoom-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
 
-            var days = parseInt(btn.dataset.days);
+            currentDays = parseInt(btn.dataset.days);
             var to   = range.max;
-            var from = days === 0 ? range.min : new Date(to.getTime() - days * 86400000);
+            var from = currentDays === 0 ? range.min : new Date(to.getTime() - currentDays * 86400000);
 
             fromInput.value = toDateInputVal(from);
             toInput.value   = toDateInputVal(to);
@@ -502,6 +503,7 @@
         // Date inputs
         function onDateChange() {
           document.querySelectorAll('.zoom-btn').forEach(function(b) { b.classList.remove('active'); });
+          currentDays = -1; // custom range
           var from = fromInput.value ? new Date(fromInput.value) : null;
           var to   = toInput.value   ? new Date(toInput.value + 'T23:59:59') : null;
           drawChart(filterData(allData, from, to));
@@ -537,7 +539,7 @@
             titleTextStyle: { color: textColor, fontName: 'DM Mono', fontSize: 10 },
             gridlines:      { color: gridColor },
             baselineColor:  gridColor,
-            format:         'M/d/yy',
+            format:         currentDays === 1 ? 'h:mm aa' : 'M/d/yy',
             slantedText: true,
             slantedTextAngle: 45
           },
