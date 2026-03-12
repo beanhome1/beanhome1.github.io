@@ -386,6 +386,8 @@
       var currentDays   = 0;
       var activeLines   = {};   // colIndex (1-based) -> true/false
       var currentView   = null; // the filtered DataView currently in use
+      var currentYRange = null; // the currently rendered Y range
+      var animFrame     = null; // requestAnimationFrame handle
 
       function fetchData() {
         var spreadsheetId = '1_GDoFcLnJAazqMSfDDTxOip93FMjcuhmDYgNBFMQBpY';
@@ -587,22 +589,14 @@
         return date.toISOString().slice(0, 10);
       }
 
-      function drawChart(data) {
+      function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      }
+
+      function drawChartAtRange(data, view, yRange, activeColors) {
         var bgColor   = '#1c2030';
         var textColor = '#a0a8b8';
         var gridColor = '#1f2433';
-
-        // Build a view with only active columns
-        var view = applyActiveColumns(data);
-
-        // Compute Y range from visible data only
-        var yRange = computeYRange(view);
-
-        // Build colors array for only active series
-        var activeColors = [];
-        for (var i = 1; i < allData.getNumberOfColumns(); i++) {
-          if (activeLines[i]) activeColors.push(COLORS[i - 1]);
-        }
 
         var options = {
           backgroundColor: { fill: bgColor },
@@ -642,7 +636,8 @@
             showColorCode: true
           },
           width:  '100%',
-          height: 420
+          height: 420,
+          animation: { duration: 0 }
         };
 
         if (!chart) {
@@ -650,6 +645,52 @@
           window.addEventListener('resize', function() { drawChart(currentView || allData); });
         }
         chart.draw(view, options);
+      }
+
+      function drawChart(data) {
+        var view         = applyActiveColumns(data);
+        var targetRange  = computeYRange(view);
+        var activeColors = [];
+        for (var i = 1; i < allData.getNumberOfColumns(); i++) {
+          if (activeLines[i]) activeColors.push(COLORS[i - 1]);
+        }
+
+        // No previous range or no valid target — draw immediately
+        if (!currentYRange || !targetRange) {
+          currentYRange = targetRange;
+          drawChartAtRange(data, view, targetRange, activeColors);
+          return;
+        }
+
+        // Cancel any in-progress animation
+        if (animFrame) cancelAnimationFrame(animFrame);
+
+        var startRange = { min: currentYRange.min, max: currentYRange.max };
+        var duration   = 400; // ms
+        var startTime  = null;
+
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          var elapsed = ts - startTime;
+          var t       = Math.min(elapsed / duration, 1);
+          var eased   = easeInOut(t);
+
+          var interpRange = {
+            min: startRange.min + (targetRange.min - startRange.min) * eased,
+            max: startRange.max + (targetRange.max - startRange.max) * eased
+          };
+
+          drawChartAtRange(data, view, interpRange, activeColors);
+
+          if (t < 1) {
+            animFrame = requestAnimationFrame(step);
+          } else {
+            currentYRange = targetRange;
+            animFrame = null;
+          }
+        }
+
+        animFrame = requestAnimationFrame(step);
       }
     </script>
   </body>
