@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oil Prices</title>
-    <link href="/style.css" rel="stylesheet" type="text/css" media="all">
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="manifest" href="site.webmanifest">
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,24 +66,11 @@
         background: transparent;
       }
 
-      .back-home:hover {
-        color: var(--accent);
-        border-color: var(--accent);
-      }
+      .back-home:hover { color: var(--accent); border-color: var(--accent); }
+      .back-home .arrow { font-size: 12px; transition: transform 0.15s; }
+      .back-home:hover .arrow { transform: translateX(-3px); }
 
-      .back-home .arrow {
-        font-size: 12px;
-        transition: transform 0.15s;
-      }
-
-      .back-home:hover .arrow {
-        transform: translateX(-3px);
-      }
-
-      header {
-        margin-bottom: 40px;
-        animation: fadeUp 0.6s ease both;
-      }
+      header { margin-bottom: 40px; animation: fadeUp 0.6s ease both; }
 
       .eyebrow {
         font-size: 10px;
@@ -123,31 +105,10 @@
         overflow-x: auto;
       }
 
-      .ticker-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: max-content;
-      }
-
-      .ticker-label {
-        font-size: 9px;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-
-      .ticker-value {
-        font-size: 18px;
-        font-weight: 500;
-        color: var(--text);
-      }
-
-      .ticker-divider {
-        width: 1px;
-        background: var(--border);
-        align-self: stretch;
-      }
+      .ticker-item { display: flex; flex-direction: column; gap: 4px; min-width: max-content; }
+      .ticker-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+      .ticker-value { font-size: 18px; font-weight: 500; color: var(--text); }
+      .ticker-divider { width: 1px; background: var(--border); align-self: stretch; }
 
       .chart-card {
         background: var(--surface);
@@ -179,22 +140,10 @@
         gap: 12px;
       }
 
-      .chart-title {
-        font-size: 11px;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-
-      .chart-meta {
-        font-size: 10px;
-        color: var(--muted);
-        letter-spacing: 0.05em;
-      }
-
+      .chart-title { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+      .chart-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
       .chart-meta span { color: var(--accent); }
 
-      /* Date picker and zoom controls */
       .chart-controls {
         display: flex;
         flex-wrap: wrap;
@@ -215,16 +164,8 @@
         transition: color 0.15s, border-color 0.15s, background 0.15s;
       }
 
-      .zoom-btn:hover {
-        color: var(--text);
-        border-color: var(--muted);
-      }
-
-      .zoom-btn.active {
-        color: var(--accent);
-        border-color: var(--accent);
-        background: rgba(200, 169, 110, 0.08);
-      }
+      .zoom-btn:hover { color: var(--text); border-color: var(--muted); }
+      .zoom-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(200, 169, 110, 0.08); }
 
       .date-range {
         display: flex;
@@ -234,12 +175,7 @@
         flex-wrap: wrap;
       }
 
-      .date-range label {
-        font-size: 9px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
+      .date-range label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
       .date-range input[type="date"] {
         font-family: 'DM Mono', monospace;
@@ -253,28 +189,48 @@
         color-scheme: dark;
       }
 
-      .date-range input[type="date"]:focus {
-        border-color: var(--accent);
-      }
+      .date-range input[type="date"]:focus { border-color: var(--accent); }
 
-      /* Custom legend */
+      /* Legend with toggle buttons */
       .chart-legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px 20px;
+        gap: 8px 12px;
         margin-top: 16px;
         padding-top: 16px;
         border-top: 1px solid var(--border);
       }
 
-      .legend-item {
+      .legend-toggle {
         display: flex;
         align-items: center;
         gap: 7px;
+        font-family: 'DM Mono', monospace;
         font-size: 10px;
         color: var(--muted);
         letter-spacing: 0.05em;
         white-space: nowrap;
+        background: transparent;
+        border: 1px solid var(--border);
+        padding: 5px 10px 5px 8px;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s, background 0.15s, opacity 0.15s;
+        border-radius: 2px;
+      }
+
+      .legend-toggle:hover { border-color: var(--muted); color: var(--text); }
+
+      .legend-toggle.active {
+        color: var(--text);
+        border-color: var(--muted);
+      }
+
+      .legend-toggle.inactive {
+        opacity: 0.38;
+      }
+
+      .legend-toggle.inactive:hover {
+        opacity: 0.65;
       }
 
       .legend-swatch {
@@ -282,12 +238,16 @@
         height: 3px;
         border-radius: 2px;
         flex-shrink: 0;
+        transition: opacity 0.15s;
       }
 
-      /* Style the Google Chart to match our dark theme */
-      #chart_div svg text {
-        fill: var(--muted) !important;
+      .legend-check {
+        font-size: 9px;
+        margin-left: 2px;
+        opacity: 0.7;
       }
+
+      #chart_div svg text { fill: var(--muted) !important; }
 
       .chart-loading {
         display: flex;
@@ -321,16 +281,8 @@
         animation: fadeUp 0.6s 0.3s ease both;
       }
 
-      .footer-note {
-        font-size: 10px;
-        color: var(--muted);
-        letter-spacing: 0.08em;
-      }
-
-      .footer-note a {
-        color: var(--accent2);
-        text-decoration: none;
-      }
+      .footer-note { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+      .footer-note a { color: var(--accent2); text-decoration: none; }
 
       .footer-badge {
         font-size: 9px;
@@ -346,9 +298,7 @@
         to   { opacity: 1; transform: translateY(0); }
       }
 
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
+      @keyframes spin { to { transform: rotate(360deg); } }
 
       @media (max-width: 600px) {
         .page { padding: 32px 20px 60px; }
@@ -430,10 +380,12 @@
       google.charts.load('current', { packages: ['corechart'] });
       google.charts.setOnLoadCallback(fetchData);
 
-      var allData     = null;
-      var chart       = null;
-      var COLORS      = ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'];
-      var currentDays = 0; // 0 = Max
+      var allData       = null;
+      var chart         = null;
+      var COLORS        = ['#c8a96e', '#4a7fa5', '#f4c20d', '#3d9970', '#ab47bc', '#00acc1'];
+      var currentDays   = 0;
+      var activeLines   = {};   // colIndex (1-based) -> true/false
+      var currentView   = null; // the filtered DataView currently in use
 
       function fetchData() {
         var spreadsheetId = '1_GDoFcLnJAazqMSfDDTxOip93FMjcuhmDYgNBFMQBpY';
@@ -446,8 +398,13 @@
           })
           .then(function(csv) {
             allData = parseCSV(csv);
+            // All lines active by default
+            for (var i = 1; i < allData.getNumberOfColumns(); i++) {
+              activeLines[i] = true;
+            }
             buildLegend(allData);
             initControls();
+            currentView = allData;
             drawChart(allData);
           })
           .catch(function(e) {
@@ -483,13 +440,81 @@
         var legend = document.getElementById('chart-legend');
         legend.innerHTML = '';
         for (var i = 1; i < data.getNumberOfColumns(); i++) {
-          var item = document.createElement('div');
-          item.className = 'legend-item';
-          item.innerHTML =
-            '<span class="legend-swatch" style="background:' + COLORS[i - 1] + '"></span>' +
-            data.getColumnLabel(i);
-          legend.appendChild(item);
+          (function(colIdx) {
+            var btn = document.createElement('button');
+            btn.className = 'legend-toggle active';
+            btn.dataset.col = colIdx;
+            btn.innerHTML =
+              '<span class="legend-swatch" style="background:' + COLORS[colIdx - 1] + '"></span>' +
+              data.getColumnLabel(colIdx) +
+              '<span class="legend-check">✕</span>';
+
+            btn.addEventListener('click', function() {
+              toggleLine(colIdx, btn);
+            });
+
+            legend.appendChild(btn);
+          })(i);
         }
+      }
+
+      function toggleLine(colIdx, btn) {
+        activeLines[colIdx] = !activeLines[colIdx];
+
+        // Need at least one line active
+        var anyActive = Object.keys(activeLines).some(function(k) { return activeLines[k]; });
+        if (!anyActive) {
+          activeLines[colIdx] = true; // revert
+          return;
+        }
+
+        if (activeLines[colIdx]) {
+          btn.classList.remove('inactive');
+          btn.classList.add('active');
+          btn.querySelector('.legend-check').textContent = '✕';
+        } else {
+          btn.classList.remove('active');
+          btn.classList.add('inactive');
+          btn.querySelector('.legend-check').textContent = '+';
+        }
+
+        drawChart(currentView);
+      }
+
+      /* Build a DataView that hides inactive columns */
+      function applyActiveColumns(dataOrView) {
+        var view = new google.visualization.DataView(dataOrView);
+        var cols = [0]; // always include datetime
+        for (var i = 1; i < allData.getNumberOfColumns(); i++) {
+          if (activeLines[i]) cols.push(i);
+        }
+        view.setColumns(cols);
+        return view;
+      }
+
+      /* Compute Y min/max only from visible data, with 5% padding */
+      function computeYRange(dataOrView) {
+        var numRows = dataOrView.getNumberOfRows();
+        var numCols = dataOrView.getNumberOfColumns();
+        var min = Infinity, max = -Infinity;
+
+        for (var r = 0; r < numRows; r++) {
+          for (var c = 1; c < numCols; c++) {
+            var v = dataOrView.getValue(r, c);
+            if (v !== null && !isNaN(v)) {
+              if (v < min) min = v;
+              if (v > max) max = v;
+            }
+          }
+        }
+
+        if (!isFinite(min)) return null;
+
+        var pad = (max - min) * 0.05 || Math.abs(min) * 0.05 || 1;
+        return {
+          min: Math.max(0, min - pad),
+          max: max + pad
+        };
       }
 
       function filterData(data, fromDate, toDate) {
@@ -515,13 +540,11 @@
       function initControls() {
         var range = getDateRange(allData);
 
-        // Set date inputs to full range
         var fromInput = document.getElementById('date-from');
         var toInput   = document.getElementById('date-to');
         fromInput.value = toDateInputVal(range.min);
         toInput.value   = toDateInputVal(range.max);
 
-        // Zoom buttons
         document.querySelectorAll('.zoom-btn').forEach(function(btn) {
           btn.addEventListener('click', function() {
             document.querySelectorAll('.zoom-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -533,7 +556,6 @@
               from = range.min;
               to   = range.max;
             } else if (currentDays === 1) {
-              // Snap to the calendar day of the latest data point
               var lastDay = new Date(range.max);
               from = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate(), 0, 0, 0);
               to   = new Date(lastDay.getFullYear(), lastDay.getMonth(), lastDay.getDate() + 1, 0, 0, 0);
@@ -544,17 +566,18 @@
 
             fromInput.value = toDateInputVal(from);
             toInput.value   = toDateInputVal(to);
-            drawChart(filterData(allData, from, to));
+            currentView = filterData(allData, from, to);
+            drawChart(currentView);
           });
         });
 
-        // Date inputs
         function onDateChange() {
           document.querySelectorAll('.zoom-btn').forEach(function(b) { b.classList.remove('active'); });
-          currentDays = -1; // custom range
+          currentDays = -1;
           var from = fromInput.value ? new Date(fromInput.value) : null;
           var to   = toInput.value   ? new Date(toInput.value + 'T23:59:59') : null;
-          drawChart(filterData(allData, from, to));
+          currentView = filterData(allData, from, to);
+          drawChart(currentView);
         }
         fromInput.addEventListener('change', onDateChange);
         toInput.addEventListener('change', onDateChange);
@@ -569,6 +592,18 @@
         var textColor = '#a0a8b8';
         var gridColor = '#1f2433';
 
+        // Build a view with only active columns
+        var view = applyActiveColumns(data);
+
+        // Compute Y range from visible data only
+        var yRange = computeYRange(view);
+
+        // Build colors array for only active series
+        var activeColors = [];
+        for (var i = 1; i < allData.getNumberOfColumns(); i++) {
+          if (activeLines[i]) activeColors.push(COLORS[i - 1]);
+        }
+
         var options = {
           backgroundColor: { fill: bgColor },
           chartArea: {
@@ -576,7 +611,7 @@
             left: 70, top: 20, right: 20, bottom: 60,
             width: '100%'
           },
-          colors: COLORS,
+          colors: activeColors,
           lineWidth: 2,
           pointSize: 4,
           pointShape: 'circle',
@@ -599,7 +634,8 @@
             gridlines:      { color: gridColor, count: 10 },
             minorGridlines: { color: gridColor, count: 2 },
             baselineColor:  gridColor,
-            viewWindowMode: 'pretty'
+            viewWindowMode: yRange ? 'explicit' : 'pretty',
+            viewWindow:     yRange ? { min: yRange.min, max: yRange.max } : undefined
           },
           tooltip: {
             textStyle: { color: '#0d0f14', fontName: 'DM Mono', fontSize: 11 },
@@ -611,9 +647,9 @@
 
         if (!chart) {
           chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-          window.addEventListener('resize', function() { chart.draw(data, options); });
+          window.addEventListener('resize', function() { drawChart(currentView || allData); });
         }
-        chart.draw(data, options);
+        chart.draw(view, options);
       }
     </script>
   </body>
