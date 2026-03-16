@@ -4,494 +4,393 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bottom Line Energy — Market Data</title>
-    <link href="/style.css" rel="stylesheet" type="text/css" media="all">
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
       :root {
-        --win-bg:      #008080;
-        --win-gray:    #c0c0c0;
-        --win-dark:    #808080;
-        --win-darker:  #404040;
-        --win-white:   #ffffff;
-        --win-black:   #000000;
-        --win-title:   #000080;
-        --win-title2:  #1084d0;
-        --win-text:    #000000;
-        --win-shadow:  #dfdfdf;
+        --win-bg:     #008080;
+        --win-gray:   #c0c0c0;
+        --win-dark:   #808080;
+        --win-darker: #404040;
+        --win-white:  #ffffff;
+        --win-black:  #000000;
+        --win-title:  #000080;
+        --win-title2: #1084d0;
       }
 
       html, body {
         background: var(--win-bg);
-        color: var(--win-text);
         font-family: 'VT323', 'Courier New', monospace;
-        font-size: 16px;
         min-height: 100vh;
+        overflow-x: hidden;
+        background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 4px 4px;
       }
 
-      .page {
-        max-width: 1020px;
-        margin: 24px auto;
-        padding: 0 16px 40px;
+      /* ── Desktop area ── */
+      .desktop {
+        min-height: calc(100vh - 36px);
+        padding: 16px;
+        position: relative;
       }
 
-      /* ── Main window ── */
-      .win-window {
+      /* ── Desktop icons ── */
+      .desktop-icons {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .desktop-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        width: 80px;
+        text-decoration: none;
+        cursor: pointer;
+        padding: 4px;
+        user-select: none;
+        border: 1px solid transparent;
+      }
+
+      .desktop-icon:hover {
+        border: 1px dotted var(--win-white);
+        background: rgba(0, 0, 128, 0.3);
+      }
+
+      .desktop-icon.selected {
+        border: 1px dotted var(--win-white);
+        background: rgba(0, 0, 128, 0.5);
+        outline: none;
+      }
+
+      .icon-img {
+        width: 48px;
+        height: 48px;
+        image-rendering: pixelated;
+        flex-shrink: 0;
+      }
+
+      .icon-label {
+        font-family: 'VT323', monospace;
+        font-size: 15px;
+        color: var(--win-white);
+        text-align: center;
+        line-height: 1.2;
+        text-shadow:
+          1px 1px 0 var(--win-black),
+          -1px 1px 0 var(--win-black),
+          1px -1px 0 var(--win-black),
+          -1px -1px 0 var(--win-black);
+        max-width: 78px;
+        word-break: break-word;
+      }
+
+      .desktop-icon.selected .icon-label {
+        background: var(--win-title);
+        color: var(--win-white);
+        text-shadow: none;
+        padding: 0 2px;
+      }
+
+      /* ── Taskbar ── */
+      .taskbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 36px;
+        background: var(--win-gray);
+        border-top: 2px solid var(--win-white);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0 4px;
+        z-index: 100;
+      }
+
+      .start-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: 'VT323', monospace;
+        font-size: 19px;
+        font-weight: bold;
+        color: var(--win-black);
         background: var(--win-gray);
         border-top:    2px solid var(--win-white);
         border-left:   2px solid var(--win-white);
         border-right:  2px solid var(--win-darker);
         border-bottom: 2px solid var(--win-darker);
-      }
-
-      .win-titlebar {
-        background: linear-gradient(90deg, var(--win-title) 0%, var(--win-title2) 100%);
-        padding: 3px 6px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        padding: 2px 10px 2px 6px;
+        cursor: pointer;
+        height: 28px;
         user-select: none;
       }
 
-      .win-titlebar-left {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .win-icon { font-size: 15px; line-height: 1; }
-
-      .win-title {
-        color: var(--win-white);
-        font-size: 19px;
-        font-family: 'VT323', monospace;
-      }
-
-      .win-titlebar-btns { display: flex; gap: 2px; }
-
-      .win-btn {
-        width: 20px;
-        height: 18px;
-        background: var(--win-gray);
-        border-top:    2px solid var(--win-white);
-        border-left:   2px solid var(--win-white);
-        border-right:  2px solid var(--win-darker);
-        border-bottom: 2px solid var(--win-darker);
-        font-size: 13px;
-        font-family: 'VT323', monospace;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: var(--win-black);
-      }
-
-      .win-menubar {
-        display: flex;
-        padding: 2px 4px;
-        border-bottom: 1px solid var(--win-dark);
-        margin-bottom: 0;
-      }
-
-      .win-menu-item {
-        font-size: 16px;
-        font-family: 'VT323', monospace;
-        padding: 1px 10px;
-        cursor: pointer;
-        color: var(--win-black);
-        text-decoration: none;
-      }
-
-      .win-menu-item:hover {
-        background: var(--win-title);
-        color: var(--win-white);
-      }
-
-      .win-body {
-        padding: 12px 14px;
-      }
-
-      /* ── Header ── */
-      header {
-        margin-bottom: 18px;
-      }
-
-      .eyebrow {
-        font-size: 14px;
-        color: var(--win-darker);
-        margin-bottom: 4px;
-        font-family: 'VT323', monospace;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-      }
-
-      h1 {
-        font-family: 'VT323', monospace;
-        font-size: clamp(26px, 5vw, 44px);
-        font-weight: normal;
-        color: var(--win-black);
-        max-width: 600px;
-        line-height: 1.1;
-        margin-bottom: 8px;
-      }
-
-      .tagline {
-        font-size: 16px;
-        font-family: 'VT323', monospace;
-        color: var(--win-darker);
-        max-width: 540px;
-        line-height: 1.5;
-      }
-
-      .header-rule {
-        margin-top: 10px;
-        height: 2px;
-        background: var(--win-darker);
-        box-shadow: 0 1px 0 var(--win-white);
-      }
-
-      /* ── Section label ── */
-      .section-label {
-        font-size: 14px;
-        font-family: 'VT323', monospace;
-        text-transform: uppercase;
-        color: var(--win-darker);
-        letter-spacing: 0.1em;
-        margin-bottom: 10px;
-        margin-top: 14px;
-      }
-
-      /* ── Cards grid ── */
-      .cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 12px;
-      }
-
-      /* ── Card as Win95 window ── */
-      .card {
-        background: var(--win-gray);
-        border-top:    2px solid var(--win-white);
-        border-left:   2px solid var(--win-white);
-        border-right:  2px solid var(--win-darker);
-        border-bottom: 2px solid var(--win-darker);
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        cursor: pointer;
-        transition: none;
-      }
-
-      .card:hover {
-        border-top:    2px solid var(--win-white);
-        border-left:   2px solid var(--win-white);
-        border-right:  2px solid var(--win-darker);
-        border-bottom: 2px solid var(--win-darker);
-        transform: none;
-      }
-
-      .card::before, .card::after { display: none; }
-
-      /* Card titlebar */
-      .card-titlebar {
-        background: linear-gradient(90deg, var(--win-title) 0%, var(--win-title2) 100%);
-        padding: 3px 6px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .card-titlebar-left {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .card-titlebar-title {
-        color: var(--win-white);
-        font-family: 'VT323', monospace;
-        font-size: 17px;
-      }
-
-      .card-titlebar-btns {
-        display: flex;
-        gap: 2px;
-      }
-
-      /* Thumbnail */
-      .card-thumb {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        background: #ffffff;
-        border-top:    2px solid var(--win-darker);
-        border-bottom: 2px solid var(--win-white);
-        overflow: hidden;
-        position: relative;
-      }
-
-      .thumb-preview {
-        position: absolute;
-        inset: 0;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        pointer-events: none;
-        background: #ffffff;
-      }
-
-      .thumb-eyebrow {
-        width: 40%;
-        height: 4px;
-        background: #000080;
-        border-radius: 0;
-      }
-
-      .thumb-title {
-        width: 75%;
-        height: 6px;
-        background: #000000;
-        opacity: 0.7;
-      }
-
-      .thumb-title-2 {
-        width: 55%;
-        height: 6px;
-        background: #000000;
-        opacity: 0.4;
-      }
-
-      .thumb-rule {
-        width: 100%;
-        height: 2px;
-        background: #808080;
-        box-shadow: 0 1px 0 #ffffff;
-        margin: 2px 0;
-      }
-
-      .thumb-ticker {
-        display: flex;
-        gap: 5px;
-        margin: 2px 0;
-      }
-
-      .thumb-tick {
-        height: 14px;
-        background: #c0c0c0;
-        border-top: 2px solid #808080;
-        border-left: 2px solid #808080;
-        border-right: 2px solid #ffffff;
-        border-bottom: 2px solid #ffffff;
-      }
-
-      .thumb-chart {
-        flex: 1;
-        background: #ffffff;
-        border-top: 2px solid #808080;
-        border-left: 2px solid #808080;
-        border-right: 2px solid #ffffff;
-        border-bottom: 2px solid #ffffff;
-        position: relative;
-        overflow: hidden;
-        margin-top: 2px;
-      }
-
-      .thumb-line svg { width: 100%; height: 100%; position: absolute; inset: 0; }
-
-      /* Card body */
-      .card-body {
-        padding: 10px 12px 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        flex: 1;
-        background: var(--win-gray);
-      }
-
-      .card-tag {
-        font-size: 13px;
-        font-family: 'VT323', monospace;
-        color: var(--win-title);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .card-title {
-        font-family: 'VT323', monospace;
-        font-size: 22px;
-        font-weight: normal;
-        color: var(--win-black);
-        line-height: 1.1;
-      }
-
-      .card-desc {
-        font-size: 15px;
-        font-family: 'VT323', monospace;
-        color: var(--win-darker);
-        line-height: 1.4;
-      }
-
-      .card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 8px;
-        padding-top: 6px;
-        border-top: 2px solid var(--win-darker);
-        box-shadow: 0 -1px 0 var(--win-white);
-      }
-
-      .card-meta {
-        font-size: 13px;
-        font-family: 'VT323', monospace;
-        color: var(--win-darker);
-        text-transform: uppercase;
-      }
-
-      .card-arrow {
-        font-size: 18px;
-        font-family: 'VT323', monospace;
-        color: var(--win-title);
-      }
-
-      .card:hover .card-arrow { transform: none; }
-
-      /* ── Statusbar footer ── */
-      footer {
-        margin-top: 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        background: var(--win-gray);
-        border-top:    2px solid var(--win-white);
-        border-left:   2px solid var(--win-white);
-        border-right:  2px solid var(--win-darker);
-        border-bottom: 2px solid var(--win-darker);
-        padding: 4px 10px;
-      }
-
-      .footer-note {
-        font-size: 15px;
-        font-family: 'VT323', monospace;
-        color: var(--win-darker);
-      }
-
-      .footer-badge {
-        font-size: 14px;
-        font-family: 'VT323', monospace;
-        color: var(--win-darker);
+      .start-btn:active {
         border-top:    2px solid var(--win-darker);
         border-left:   2px solid var(--win-darker);
         border-right:  2px solid var(--win-white);
         border-bottom: 2px solid var(--win-white);
-        padding: 2px 8px;
       }
 
-      @media (max-width: 600px) {
-        .page { padding: 10px 8px 40px; }
+      .start-logo {
+        width: 18px;
+        height: 18px;
+        image-rendering: pixelated;
+        flex-shrink: 0;
+      }
+
+      .taskbar-divider {
+        width: 2px;
+        height: 24px;
+        border-left: 1px solid var(--win-darker);
+        border-right: 1px solid var(--win-white);
+        margin: 0 2px;
+        flex-shrink: 0;
+      }
+
+      .taskbar-tray {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-top:    1px solid var(--win-darker);
+        border-left:   1px solid var(--win-darker);
+        border-right:  1px solid var(--win-white);
+        border-bottom: 1px solid var(--win-white);
+        padding: 2px 8px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+
+      .taskbar-clock {
+        font-family: 'VT323', monospace;
+        font-size: 17px;
+        color: var(--win-black);
+      }
+
+      .taskbar-program {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: 'VT323', monospace;
+        font-size: 16px;
+        color: var(--win-black);
+        background: var(--win-gray);
+        border-top:    2px solid var(--win-darker);
+        border-left:   2px solid var(--win-darker);
+        border-right:  2px solid var(--win-white);
+        border-bottom: 2px solid var(--win-white);
+        padding: 2px 10px;
+        height: 26px;
+        text-decoration: none;
+        min-width: 140px;
+        flex-shrink: 0;
+      }
+
+      /* ── Start Menu ── */
+      .start-menu {
+        position: fixed;
+        bottom: 36px;
+        left: 0;
+        width: 210px;
+        background: var(--win-gray);
+        border-top:    2px solid var(--win-white);
+        border-left:   2px solid var(--win-white);
+        border-right:  2px solid var(--win-darker);
+        border-bottom: 2px solid var(--win-darker);
+        display: none;
+        z-index: 200;
+        flex-direction: row;
+      }
+
+      .start-menu.open { display: flex; }
+
+      .start-menu-sidebar {
+        width: 22px;
+        background: linear-gradient(180deg, var(--win-title2) 0%, var(--win-title) 100%);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 6px;
+        flex-shrink: 0;
+      }
+
+      .start-menu-sidebar-text {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        font-family: 'VT323', monospace;
+        font-size: 16px;
+        color: var(--win-white);
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+      }
+
+      .start-menu-sidebar-text strong { font-weight: bold; }
+
+      .start-menu-items {
+        flex: 1;
+        padding: 4px 0;
+      }
+
+      .start-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 14px;
+        font-family: 'VT323', monospace;
+        font-size: 18px;
+        color: var(--win-black);
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .start-menu-item:hover {
+        background: var(--win-title);
+        color: var(--win-white);
+      }
+
+      .start-menu-sep {
+        height: 1px;
+        background: var(--win-darker);
+        box-shadow: 0 1px 0 var(--win-white);
+        margin: 3px 6px;
       }
     </style>
   </head>
   <body>
-    <div class="page">
 
-      <div class="win-window">
-        <div class="win-titlebar">
-          <div class="win-titlebar-left">
-            <span class="win-icon">⚡</span>
-            <span class="win-title">Bottom Line Energy — Market Data</span>
+    <div class="desktop" id="desktop">
+      <div class="desktop-icons">
+
+        <a class="desktop-icon" href="Oil_Prices.html" id="icon-oil">
+          <div class="icon-img">
+            <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" width="48" height="48">
+              <!-- Document -->
+              <rect x="4" y="2" width="30" height="38" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+              <!-- Folded corner -->
+              <polygon points="26,2 34,10 26,10" fill="#c0c0c0" stroke="#000000" stroke-width="1"/>
+              <!-- Axes -->
+              <rect x="8" y="14" width="1" height="20" fill="#000000"/>
+              <rect x="8" y="33" width="20" height="1" fill="#000000"/>
+              <!-- Bars -->
+              <rect x="10" y="25" width="4" height="9" fill="#000080"/>
+              <rect x="16" y="20" width="4" height="14" fill="#008000"/>
+              <rect x="22" y="17" width="4" height="17" fill="#800000"/>
+              <!-- Line -->
+              <polyline points="12,23 18,18 24,15" fill="none" stroke="#ff0000" stroke-width="2"/>
+              <!-- Title bar stub -->
+              <rect x="4" y="2" width="30" height="6" fill="#000080"/>
+              <rect x="6" y="4" width="14" height="2" fill="#ffffff"/>
+              <!-- Oil drop (right side) -->
+              <ellipse cx="38" cy="34" rx="6" ry="7" fill="#ffff00" stroke="#000000" stroke-width="1"/>
+              <polygon points="38,22 34,31 42,31" fill="#ffff00" stroke="#000000" stroke-width="1"/>
+              <!-- Shine on drop -->
+              <rect x="35" y="30" width="2" height="4" fill="#ffffff" opacity="0.6"/>
+            </svg>
           </div>
-          <div class="win-titlebar-btns">
-            <div class="win-btn">_</div>
-            <div class="win-btn">□</div>
-            <div class="win-btn">✕</div>
-          </div>
-        </div>
+          <span class="icon-label">Oil Prices</span>
+        </a>
 
-        <div class="win-menubar">
-          <span class="win-menu-item">File</span>
-          <span class="win-menu-item">View</span>
-          <span class="win-menu-item">Help</span>
-        </div>
-
-        <div class="win-body">
-
-          <header>
-            <p class="eyebrow">Bottom Line Energy — Market Intelligence</p>
-            <h1>Energy Market Data</h1>
-            <p class="tagline">Live pricing dashboards tracking crude oil, heating oil, and Bottom Line Energy rates against market benchmarks.</p>
-            <div class="header-rule"></div>
-          </header>
-
-          <p class="section-label">Available Dashboards</p>
-
-          <div class="cards">
-
-            <!-- Oil Prices Card -->
-            <a class="card" href="Oil_Prices.html">
-              <div class="card-titlebar">
-                <div class="card-titlebar-left">
-                  <span class="win-icon">📊</span>
-                  <span class="card-titlebar-title">Oil Prices</span>
-                </div>
-                <div class="card-titlebar-btns">
-                  <div class="win-btn">_</div>
-                  <div class="win-btn">□</div>
-                  <div class="win-btn">✕</div>
-                </div>
-              </div>
-              <div class="card-thumb">
-                <div class="thumb-preview">
-                  <div class="thumb-eyebrow"></div>
-                  <div class="thumb-title"></div>
-                  <div class="thumb-title-2"></div>
-                  <div class="thumb-rule"></div>
-                  <div class="thumb-ticker">
-                    <div class="thumb-tick" style="width:22%"></div>
-                    <div class="thumb-tick" style="width:22%"></div>
-                    <div class="thumb-tick" style="width:22%"></div>
-                    <div class="thumb-tick" style="width:22%"></div>
-                  </div>
-                  <div class="thumb-chart">
-                    <div class="thumb-line">
-                      <svg viewBox="0 0 200 80" preserveAspectRatio="none">
-                        <polyline points="0,60 30,58 60,40 90,45 120,30 150,28 180,25 200,27"
-                          fill="none" stroke="#000080" stroke-width="1.5"/>
-                        <polyline points="0,65 30,63 60,55 90,57 120,48 150,46 180,44 200,43"
-                          fill="none" stroke="#008000" stroke-width="1.5"/>
-                        <polyline points="0,70 30,69 60,65 90,66 120,62 150,61 180,60 200,59"
-                          fill="none" stroke="#800000" stroke-width="1.5"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="card-body">
-                <span class="card-tag">Energy · Commodities</span>
-                <span class="card-title">Oil Prices</span>
-                <p class="card-desc">WTI Crude, Heating Oil, and Bottom Line pricing tracked daily against market benchmarks and running averages.</p>
-                <div class="card-footer">
-                  <span class="card-meta">Updated Daily · Live</span>
-                  <span class="card-arrow">→</span>
-                </div>
-              </div>
-            </a>
-
-          </div>
-
-          <footer>
-            <span class="footer-note">Bottom Line Energy · Market Data Dashboards</span>
-            <span class="footer-badge">● LIVE DATA</span>
-          </footer>
-
-        </div>
       </div>
-
     </div>
+
+    <!-- Start menu -->
+    <div class="start-menu" id="startMenu">
+      <div class="start-menu-sidebar">
+        <span class="start-menu-sidebar-text"><strong>Windows</strong> 95</span>
+      </div>
+      <div class="start-menu-items">
+        <a class="start-menu-item" href="Oil_Prices.html">📊 Oil Prices</a>
+        <div class="start-menu-sep"></div>
+        <span class="start-menu-item">⚙️ Settings</span>
+        <div class="start-menu-sep"></div>
+        <span class="start-menu-item">🔌 Shut Down...</span>
+      </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+      <button class="start-btn" id="startBtn" onclick="toggleStart()">
+        <svg class="start-logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+          <rect x="0" y="0" width="8" height="8" fill="#ff0000"/>
+          <rect x="10" y="0" width="8" height="8" fill="#00ff00"/>
+          <rect x="0" y="10" width="8" height="8" fill="#0000ff"/>
+          <rect x="10" y="10" width="8" height="8" fill="#ffff00"/>
+        </svg>
+        Start
+      </button>
+
+      <div class="taskbar-divider"></div>
+
+      <a class="taskbar-program" href="Oil_Prices.html">
+        📊 Oil Prices
+      </a>
+
+      <div class="taskbar-tray">
+        <span class="taskbar-clock" id="clock">12:00 PM</span>
+      </div>
+    </div>
+
+    <script>
+      function updateClock() {
+        var now = new Date();
+        var h = now.getHours();
+        var m = now.getMinutes();
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        document.getElementById('clock').textContent =
+          h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+      }
+      updateClock();
+      setInterval(updateClock, 10000);
+
+      function toggleStart() {
+        document.getElementById('startMenu').classList.toggle('open');
+      }
+
+      document.addEventListener('click', function(e) {
+        var menu = document.getElementById('startMenu');
+        var btn  = document.getElementById('startBtn');
+        if (!menu.contains(e.target) && !btn.contains(e.target)) {
+          menu.classList.remove('open');
+        }
+      });
+
+      // Icon single-click = select, double-click = open
+      document.querySelectorAll('.desktop-icon').forEach(function(icon) {
+        var clicks = 0;
+        icon.addEventListener('click', function(e) {
+          e.preventDefault();
+          clicks++;
+          document.querySelectorAll('.desktop-icon').forEach(function(i) { i.classList.remove('selected'); });
+          icon.classList.add('selected');
+          if (clicks === 1) {
+            setTimeout(function() {
+              if (clicks === 1) { /* single click, just select */ }
+              clicks = 0;
+            }, 300);
+          } else if (clicks >= 2) {
+            clicks = 0;
+            window.location.href = icon.getAttribute('href');
+          }
+        });
+      });
+
+      // Deselect on bare desktop click
+      document.getElementById('desktop').addEventListener('click', function(e) {
+        if (e.target === this || e.target.classList.contains('desktop-icons')) {
+          document.querySelectorAll('.desktop-icon').forEach(function(i) { i.classList.remove('selected'); });
+        }
+      });
+    </script>
+
   </body>
 </html>
